@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Weather App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>🌤 Weather Dashboard</h1>
+
+  <!-- Input -->
+  <input type="text" id="city" placeholder="Enter city name">
+  <button onclick="getWeather()">Check</button>
+
+  <!-- Weather Card -->
+  <div class="weather-card" id="weatherCard" style="display:none;">
+    <div class="weather-main">
+      <span class="weather-icon" id="icon">🌤</span>
+      <span class="temperature" id="temp">--°</span>
+    </div>
+    <div class="details" id="weatherDetails"></div>
+  </div>
+
+  <script>
+    async function getWeather() {
+      const city = document.getElementById("city").value;
+      if (!city) {
+        alert("Please enter a city");
+        return;
+      }
+
+      try {
+        const response = await fetch(`http://localhost:5000/weather?city=${encodeURIComponent(city)}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+
+        const card = document.getElementById("weatherCard");
+        if (data.error) {
+          card.style.display = "block";
+          document.getElementById("icon").textContent = "❌";
+          document.getElementById("temp").textContent = "--°";
+          document.getElementById("weatherDetails").innerText = data.error;
+        } else {
+          card.style.display = "block";
+          document.getElementById("icon").textContent = pickIcon(data.description);
+          document.getElementById("temp").textContent = `${Math.round(data.temperature)}°C`;
+          document.getElementById("weatherDetails").innerHTML =
+            `<strong>${data.city}</strong><br>
+             ${data.description.toUpperCase()}<br>
+             Humidity: ${data.humidity}% | Pressure: ${data.pressure} hPa`;
+        }
+      } catch (error) {
+        console.error('Error fetching weather:', error);
+        alert('Error fetching weather data. Make sure the backend server is running on port 5000.');
+      }
+    }
+
+    // Allow Enter key to trigger search
+    document.getElementById('city').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        getWeather();
+      }
+    });
+
+    function pickIcon(desc) {
+      desc = desc.toLowerCase();
+      if (desc.includes("cloud")) return "☁️";
+      if (desc.includes("rain")) return "🌧️";
+      if (desc.includes("clear")) return "☀️";
+      if (desc.includes("snow")) return "❄️";
+      if (desc.includes("thunder") || desc.includes("storm")) return "⛈️";
+      if (desc.includes("mist") || desc.includes("fog")) return "🌫️";
+      return "🌤️";
+    }
+  </script>
+</body>
+</html>
